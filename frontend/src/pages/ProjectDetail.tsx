@@ -20,7 +20,7 @@ export function ProjectDetailPage() {
   const [editingTask, setEditingTask] = useState<TaskResponse | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
-  const [editAssigneeId, setEditAssigneeId] = useState('')
+  const [editAssigneeEmail, setEditAssigneeEmail] = useState('')
   const [editDueDate, setEditDueDate] = useState('')
   const [editBusy, setEditBusy] = useState(false)
   const [editErr, setEditErr] = useState<string | null>(null)
@@ -39,14 +39,7 @@ export function ProjectDetailPage() {
   const myRole = useMemo(() => project?.members.find((m) => m.userId === me?.userId)?.role, [project, me?.userId])
   const isAdmin = myRole === 'ADMIN'
 
-  // Build a userId → display name map from project members
-  const memberMap = useMemo(() => {
-    const map: Record<string, string> = {}
-    for (const m of project?.members ?? []) {
-      map[m.userId] = m.name ?? m.email ?? m.userId
-    }
-    return map
-  }, [project?.members])
+  // memberMap no longer needed — backend now returns assigneeName directly on each task
 
   const load = useCallback(async () => {
     if (!projectId) return
@@ -99,7 +92,9 @@ export function ProjectDetailPage() {
     setEditingTask(task)
     setEditTitle(task.title)
     setEditDescription(task.description ?? '')
-    setEditAssigneeId(task.assigneeId ?? '')
+    // Pre-fill with the assignee's email (looked up from members), not the raw userId
+    const assigneeMember = project?.members.find((m) => m.userId === task.assigneeId)
+    setEditAssigneeEmail(assigneeMember?.email ?? '')
     setEditDueDate(task.dueDate ?? '')
     setEditErr(null)
   }
@@ -119,7 +114,7 @@ export function ProjectDetailPage() {
       const updated = await api.updateTask(projectId, editingTask.id, {
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
-        assigneeId: editAssigneeId.trim() || undefined,
+        assigneeEmail: editAssigneeEmail.trim() || undefined,
         dueDate: editDueDate || undefined,
       })
       setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
@@ -236,7 +231,7 @@ export function ProjectDetailPage() {
                     </div>
                     {t.description ? <div className="muted small">{t.description}</div> : null}
                     <div className="muted small taskMeta">
-                      <span>Assignee: {t.assigneeId ? (memberMap[t.assigneeId] ?? t.assigneeId) : '—'}</span>
+                      <span>Assignee: {t.assigneeName ?? '—'}</span>
                       <span>Due: {t.dueDate ?? '—'}</span>
                     </div>
                     <div className="actions">
@@ -358,8 +353,8 @@ export function ProjectDetailPage() {
               <Field label="Description (optional)">
                 <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={3} />
               </Field>
-              <Field label="Assignee (userId, optional)">
-                <input value={editAssigneeId} onChange={(e) => setEditAssigneeId(e.target.value)} placeholder="User ID" />
+              <Field label="Assignee email (optional)">
+                <input value={editAssigneeEmail} onChange={(e) => setEditAssigneeEmail(e.target.value)} placeholder="member@example.com" />
               </Field>
               <Field label="Due date (optional)">
                 <input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />

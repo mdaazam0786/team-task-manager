@@ -68,9 +68,18 @@ public class ProjectService {
 		var project = access.requirePermissionProject(projectId, userId, ProjectPermission.VIEW_PROJECT);
 		var projectResponse = toResponse(project);
 
-		Page<TaskResponse> tasks = taskRepository
+		// Build a userId -> name map from the already-resolved members
+		Map<String, String> userNameById = projectResponse.members().stream()
+				.filter(m -> m.userId() != null && m.name() != null)
+				.collect(Collectors.toMap(ProjectMemberResponse::userId, ProjectMemberResponse::name));
+
+		List<TaskResponse> taskList = taskRepository
 				.findByProjectId(projectId, PageRequest.of(taskPage, taskSize))
-				.map(TaskService::toResponse);
+				.map(task -> TaskService.toResponse(task, userNameById.get(task.getAssigneeId())))
+				.getContent();
+
+		long totalCount = taskRepository.countByProjectId(projectId);
+		int totalPages = (int) Math.ceil((double) totalCount / taskSize);
 
 		return new ProjectDetailsResponse(
 				projectResponse.id(),
@@ -78,11 +87,11 @@ public class ProjectService {
 				projectResponse.description(),
 				projectResponse.members(),
 				projectResponse.createdAt(),
-				tasks.getContent(),
-				tasks.getTotalElements(),
-				tasks.getTotalPages(),
-				tasks.getNumber(),
-				tasks.getSize()
+				taskList,
+				totalCount,
+				totalPages,
+				taskPage,
+				taskSize
 		);
 	}
 

@@ -1,11 +1,6 @@
 package TaskManagementApp.service;
 
-import TaskManagementApp.data.Project;
-import TaskManagementApp.data.ProjectMember;
-import TaskManagementApp.data.ProjectPermission;
-import TaskManagementApp.data.ProjectRole;
-import TaskManagementApp.data.Task;
-import TaskManagementApp.data.TaskStatus;
+import TaskManagementApp.data.*;
 import TaskManagementApp.dto.CreateTaskRequest;
 import TaskManagementApp.dto.TaskResponse;
 import TaskManagementApp.dto.UpdateTaskRequest;
@@ -13,6 +8,7 @@ import TaskManagementApp.exception.BadRequestException;
 import TaskManagementApp.exception.ForbiddenException;
 import TaskManagementApp.exception.NotFoundException;
 import TaskManagementApp.repository.TaskRepository;
+import TaskManagementApp.repository.UserRepository;
 import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,20 +18,22 @@ import org.springframework.stereotype.Service;
 public class TaskService {
 	private final TaskRepository taskRepository;
 	private final ProjectAccessService access;
+	private final UserRepository userRepository;
 
-	public TaskService(TaskRepository taskRepository, ProjectAccessService access) {
+	public TaskService(TaskRepository taskRepository, ProjectAccessService access, UserRepository userRepository) {
 		this.taskRepository = taskRepository;
 		this.access = access;
+		this.userRepository = userRepository;
 	}
 
 	public Page<TaskResponse> listForProject(String projectId, String userId, Pageable pageable) {
 		access.requirePermissionProject(projectId, userId, ProjectPermission.VIEW_PROJECT);
-		return taskRepository.findByProjectId(projectId, pageable).map(TaskService::toResponse);
+		return taskRepository.findByProjectId(projectId, pageable).map(this::toResponse);
 	}
 
 	public TaskResponse create(String projectId, String userId, CreateTaskRequest req) {
 		Project project = access.requirePermissionProject(projectId, userId, ProjectPermission.MANAGE_TASKS);
-		requireAssigneeMemberIfPresent(project, req.assigneeId());
+		String assigneeId = resolveAssigneeId(project, req.assigneeEmail());
 
 		Instant now = Instant.now();
 		Task task = Task.builder()
@@ -43,7 +41,7 @@ public class TaskService {
 				.title(req.title())
 				.description(req.description())
 				.status(TaskStatus.TODO)
-				.assigneeId(req.assigneeId())
+				.assigneeId(assigneeId)
 				.dueDate(req.dueDate())
 				.createdBy(userId)
 				.createdAt(now)
@@ -57,9 +55,9 @@ public class TaskService {
 		Project project = access.requirePermissionProject(projectId, userId, ProjectPermission.MANAGE_TASKS);
 		Task task = requireTaskInProject(taskId, projectId);
 
-		if (req.assigneeId() != null) {
-			requireAssigneeMemberIfPresent(project, req.assigneeId());
-			task.setAssigneeId(req.assigneeId());
+		if (req.assigneeEmail() != null) {
+			String assigneeId = resolveAssigneeId(project, req.assigneeEmail());
+			task.setAssigneeId(assigneeId);
 		}
 		if (req.title() != null) task.setTitle(req.title());
 		if (req.description() != null) task.setDescription(req.description());
@@ -103,7 +101,17 @@ public class TaskService {
 		return task;
 	}
 
-	public static TaskResponse toResponse(Task task) {
+	public TaskResponse toResponse(Task task) {
+		String assigneeName = null;
+		if (task.getAssigneeId() != null) {
+			assigneeName = userRepository.findById(task.getAssigneeId())
+					.map(User::getName)
+					.orElse(null);
+		}
+		return toResponse(task, assigneeName);
+	}
+
+	public static TaskResponse toResponse(Task task, String assigneeName) {
 		return new TaskResponse(
 				task.getId(),
 				task.getProjectId(),
@@ -111,6 +119,7 @@ public class TaskService {
 				task.getDescription(),
 				task.getStatus(),
 				task.getAssigneeId(),
+				assigneeName,
 				task.getDueDate(),
 				task.getCreatedBy(),
 				task.getCreatedAt(),
@@ -118,12 +127,17 @@ public class TaskService {
 		);
 	}
 
-	private static void requireAssigneeMemberIfPresent(Project project, String assigneeId) {
-		if (assigneeId == null || assigneeId.isBlank()) return;
-		boolean isMember = project.getMembers().stream().map(ProjectMember::getUserId).anyMatch(assigneeId::equals);
+	private String resolveAssigneeId(Project project, String assigneeEmail) {
+		if (assigneeEmail == null || assigneeEmail.isBlank()) return null;
+		var user = userRepository.findByEmail(assigneeEmail.toLowerCase())
+				.orElseThrow(() -> new NotFoundException("Assignee user not found with email: " + assigneeEmail));
+		boolean isMember = project.getMembers().stream()
+				.map(ProjectMember::getUserId)
+				.anyMatch(user.getId()::equals);
 		if (!isMember) {
 			throw new BadRequestException("Assignee must be a project member");
 		}
+		return user.getId();
 	}
 }
 

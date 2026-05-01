@@ -38,6 +38,7 @@ export type TaskResponse = {
   description: string | null
   status: TaskStatus
   assigneeId: string | null
+  assigneeName: string | null
   dueDate: string | null
   createdBy: string
   createdAt: string
@@ -214,14 +215,14 @@ export const api = {
 
   listTasks: (projectId: string) =>
     request<unknown>(`/api/projects/${projectId}/tasks`).then((p) => unwrapData<TaskResponse[]>(p)),
-  createTask: (projectId: string, payload: { title: string; description?: string; assigneeId?: string; dueDate?: string }) =>
+  createTask: (projectId: string, payload: { title: string; description?: string; assigneeEmail?: string; dueDate?: string }) =>
     request<unknown>(`/api/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify(payload) }).then((p) =>
       unwrapData<TaskResponse>(p),
     ),
   updateTask: (
     projectId: string,
     taskId: string,
-    payload: { title?: string; description?: string; assigneeId?: string; dueDate?: string },
+    payload: { title?: string; description?: string; assigneeEmail?: string; dueDate?: string },
   ) =>
     request<unknown>(`/api/projects/${projectId}/tasks/${taskId}`, { method: 'PUT', body: JSON.stringify(payload) }).then((p) =>
       unwrapData<TaskResponse>(p),

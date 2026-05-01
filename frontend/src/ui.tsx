@@ -118,7 +118,7 @@ export function AppShell() {
   const [createDescription, setCreateDescription] = useState('')
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
-  const [taskAssigneeId, setTaskAssigneeId] = useState('')
+  const [taskAssigneeEmail, setTaskAssigneeEmail] = useState('')
   const [taskDueDate, setTaskDueDate] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -166,12 +166,12 @@ export function AppShell() {
         await api.createTask(projectIdForTask, {
           title: taskTitle.trim(),
           description: taskDescription.trim() || undefined,
-          assigneeId: taskAssigneeId.trim() || undefined,
+          assigneeEmail: taskAssigneeEmail.trim() || undefined,
           dueDate: taskDueDate || undefined,
         })
         setTaskTitle('')
         setTaskDescription('')
-        setTaskAssigneeId('')
+        setTaskAssigneeEmail('')
         setTaskDueDate('')
         closeModal()
         window.dispatchEvent(new CustomEvent('project:refresh', { detail: { projectId: projectIdForTask } }))
@@ -301,8 +301,8 @@ export function AppShell() {
                     <textarea value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} rows={3} />
                   </label>
                   <label className="field">
-                    <div className="label">Assignee (userId, optional)</div>
-                    <input value={taskAssigneeId} onChange={(e) => setTaskAssigneeId(e.target.value)} placeholder="User ID" />
+                    <div className="label">Assignee email (optional)</div>
+                    <input value={taskAssigneeEmail} onChange={(e) => setTaskAssigneeEmail(e.target.value)} placeholder="member@example.com" />
                   </label>
                   <label className="field">
                     <div className="label">Due date (optional)</div>

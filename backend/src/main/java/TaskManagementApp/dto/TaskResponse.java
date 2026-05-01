@@ -12,6 +12,7 @@ public record TaskResponse(
 		String description,
 		TaskStatus status,
 		String assigneeId,
+		String assigneeName,
 		LocalDate dueDate,
 		String createdBy,
 		Instant createdAt,
