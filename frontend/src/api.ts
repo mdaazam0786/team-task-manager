@@ -64,6 +64,14 @@ export type DashboardOverviewResponse = {
 // Dashboard chart range selector
 export type DashboardRange = 'daily' | 'weekly' | 'monthly'
 
+export type ProfileResponse = {
+  id: string
+  name: string
+  email: string
+  bio: string | null
+  createdAt: string
+}
+
 const TOKEN_KEY = 'ttm_token'
 const USER_KEY = 'ttm_user'
 
@@ -234,5 +242,12 @@ export const api = {
     }).then((p) => unwrapData<TaskResponse>(p)),
   deleteTask: (projectId: string, taskId: string) =>
     request<void>(`/api/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' }),
+
+  getProfile: () =>
+    request<unknown>('/api/profile').then((p) => unwrapData<ProfileResponse>(p)),
+  updateProfile: (payload: { name: string; bio?: string }) =>
+    request<unknown>('/api/profile', { method: 'PUT', body: JSON.stringify(payload) }).then((p) => unwrapData<ProfileResponse>(p)),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<void>('/api/profile/password', { method: 'PATCH', body: JSON.stringify({ currentPassword, newPassword }) }),
 }
 

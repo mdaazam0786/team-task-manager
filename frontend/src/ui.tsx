@@ -16,6 +16,7 @@ function Icon({
     | 'bell'
     | 'plus'
     | 'logout'
+    | 'user'
 }) {
   // Simple inline icons to avoid extra deps
   const common = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }
@@ -80,6 +81,13 @@ function Icon({
           <path d="M10 17l5-5-5-5" />
           <path d="M15 12H3" />
           <path d="M21 3v18" />
+        </svg>
+      )
+    case 'user':
+      return (
+        <svg {...common} aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
         </svg>
       )
   }
@@ -203,6 +211,7 @@ export function AppShell() {
         <nav className="sidebarNav">
           <SidebarLink to="/dashboard" icon="grid" label="Dashboard" />
           <SidebarLink to="/projects" icon="folder" label="Projects" />
+          <SidebarLink to="/profile" icon="user" label="Profile" />
           <a className="sidebarLink disabled" aria-disabled="true" title="Coming soon">
             <span className="sidebarIcon" aria-hidden="true">
               <Icon name="calendar" />

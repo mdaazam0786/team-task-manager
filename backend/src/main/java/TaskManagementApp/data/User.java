@@ -31,6 +31,9 @@ public class User {
 	@Field("name")
 	private String name;
 
+	@Field("bio")
+	private String bio;
+
 	@NotBlank
 	@Field("passwordHash")
 	private String passwordHash;
