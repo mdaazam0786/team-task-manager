@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -18,12 +20,19 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document("tasks")
+@CompoundIndexes({
+	// Speeds up countByAssigneeIdAndStatus (dashboard overview)
+	@CompoundIndex(name = "assignee_status", def = "{'assigneeId': 1, 'status': 1}"),
+	// Speeds up countByCreatedByAndCreatedAtBetween (dashboard chart)
+	@CompoundIndex(name = "createdBy_createdAt", def = "{'createdBy': 1, 'createdAt': 1}"),
+	// Speeds up countByProjectIdAndStatusNot and findByProjectId
+	@CompoundIndex(name = "project_status", def = "{'projectId': 1, 'status': 1}")
+})
 public class Task {
 	@Id
 	private String id;
 
 	@NotBlank
-	@Indexed
 	@Field("projectId")
 	private String projectId;
 
@@ -38,7 +47,6 @@ public class Task {
 	@Field("status")
 	private TaskStatus status;
 
-	@Indexed
 	@Field("assigneeId")
 	private String assigneeId;
 
@@ -55,4 +63,3 @@ public class Task {
 	@Field("updatedAt")
 	private Instant updatedAt;
 }
-

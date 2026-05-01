@@ -3,7 +3,6 @@ package TaskManagementApp.config;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
@@ -30,8 +29,7 @@ public class MongoDBConfig extends AbstractMongoClientConfiguration {
 
     @Override
     protected Collection<String> getMappingBasePackages() {
-        // Fixed: was "TaskManagementApp.model" — documents live in .data
-        return Collections.singleton("TaskManagementApp.model");
+        return Collections.singleton("TaskManagementApp.data");
     }
 
     @Override
