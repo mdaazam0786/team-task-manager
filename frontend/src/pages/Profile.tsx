@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, type ProfileResponse, setAuth } from '../api'
+import { api, type ProfileResponse } from '../api'
 import { useAuth } from '../auth-context'
 import { ErrorBanner } from '../ui'
 
