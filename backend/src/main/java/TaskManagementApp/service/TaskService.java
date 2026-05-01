@@ -35,6 +35,9 @@ public class TaskService {
 		Project project = access.requirePermissionProject(projectId, userId, ProjectPermission.MANAGE_TASKS);
 		String assigneeId = resolveAssigneeId(project, req.assigneeEmail());
 
+		// Default assignee to the creator so dashboard counts always reflect the task
+		if (assigneeId == null) assigneeId = userId;
+
 		Instant now = Instant.now();
 		Task task = Task.builder()
 				.projectId(projectId)
