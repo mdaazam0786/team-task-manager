@@ -24,7 +24,6 @@ export function ProjectDetailPage() {
   const [editDueDate, setEditDueDate] = useState('')
   const [editBusy, setEditBusy] = useState(false)
   const [editErr, setEditErr] = useState<string | null>(null)
-
   function mergeProject(base: ProjectResponse, prev: ProjectDetailResponse | null): ProjectDetailResponse {
     return {
       ...base,
@@ -353,8 +352,15 @@ export function ProjectDetailPage() {
               <Field label="Description (optional)">
                 <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={3} />
               </Field>
-              <Field label="Assignee email (optional)">
-                <input value={editAssigneeEmail} onChange={(e) => setEditAssigneeEmail(e.target.value)} placeholder="member@example.com" />
+              <Field label="Assignee (optional)">
+                <select value={editAssigneeEmail} onChange={(e) => setEditAssigneeEmail(e.target.value)}>
+                  <option value="">— Unassigned —</option>
+                  {project?.members.map((m) => (
+                    <option key={m.userId} value={m.email ?? ''}>
+                      {m.name ?? m.email ?? m.userId}
+                    </option>
+                  ))}
+                </select>
               </Field>
               <Field label="Due date (optional)">
                 <input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />

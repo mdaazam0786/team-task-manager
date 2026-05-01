@@ -122,6 +122,7 @@ export function AppShell() {
   const [taskDueDate, setTaskDueDate] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [projectMembers, setProjectMembers] = useState<Array<{ userId: string; name: string | null; email: string | null }>>([])
 
   const projectDetailMatch = useMemo(() => loc.pathname.match(/^\/projects\/([^/]+)$/), [loc.pathname])
   const projectIdForTask = projectDetailMatch?.[1] ?? null
@@ -141,12 +142,17 @@ export function AppShell() {
   function openModal() {
     setErr(null)
     setShowModal(true)
+    // Fetch project members so the assignee dropdown is populated
+    if (projectIdForTask) {
+      api.getProject(projectIdForTask).then((p) => setProjectMembers(p.members)).catch(() => {})
+    }
   }
 
   function closeModal() {
     setShowModal(false)
     setBusy(false)
     setErr(null)
+    setProjectMembers([])
   }
 
   async function onPrimaryAction() {
@@ -301,8 +307,15 @@ export function AppShell() {
                     <textarea value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} rows={3} />
                   </label>
                   <label className="field">
-                    <div className="label">Assignee email (optional)</div>
-                    <input value={taskAssigneeEmail} onChange={(e) => setTaskAssigneeEmail(e.target.value)} placeholder="member@example.com" />
+                    <div className="label">Assignee (optional)</div>
+                    <select value={taskAssigneeEmail} onChange={(e) => setTaskAssigneeEmail(e.target.value)}>
+                      <option value="">— Unassigned —</option>
+                      {projectMembers.map((m) => (
+                        <option key={m.userId} value={m.email ?? ''}>
+                          {m.name ?? m.email ?? m.userId}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label className="field">
                     <div className="label">Due date (optional)</div>
