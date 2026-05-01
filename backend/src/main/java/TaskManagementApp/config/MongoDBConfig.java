@@ -31,7 +31,7 @@ public class MongoDBConfig extends AbstractMongoClientConfiguration {
     @Override
     protected Collection<String> getMappingBasePackages() {
         // Fixed: was "TaskManagementApp.model" — documents live in .data
-        return Collections.singleton("TaskManagementApp.data");
+        return Collections.singleton("TaskManagementApp.model");
     }
 
     @Override
